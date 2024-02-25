@@ -1,5 +1,5 @@
 -- Variables
-local love= require('love')
+local love = require('love')
 local player = { x = 400, y = 300, img = nil }
 local bullets = {}
 local enemies = {}
@@ -7,8 +7,9 @@ local enemyTimer = 15
 local enemyInterval = 50
 local enemyBullets = {}
 local FireInterval = 6
-local enemyFireInterval=30
-local maxEnemyBullets =3 
+local enemyFireInterval = 30
+local maxEnemyBullets = 3
+
 -- Imágenes
 local background = love.graphics.newImage("Imagen.png")
 local playerImg = love.graphics.newImage("player.png")
@@ -20,8 +21,6 @@ local enemyBulletImg = love.graphics.newImage("bala.png")
 local reloadTime = 0.4
 -- Tiempo hasta el próximo disparo
 local timeToNextShot = 0
-
-
 
 function love.load()
     player.img = playerImg
@@ -55,19 +54,18 @@ function love.update(dt)
     end
 
     -- Mover balas
-    for _, bullet in ipairs(bullets) do
+    for i, bullet in ipairs(bullets) do
         bullet.y = bullet.y - 400 * dt
 
         -- Eliminar balas fuera de pantalla
         if bullet.y < 0 then
-            table.remove(bullets, _)
+            table.remove(bullets, i)
         end
     end
 
     -- Crear enemigos
     if math.random(100) < 2 then
-        table.insert(enemies, { x = math.random(800),
-         y = 0 })
+        table.insert(enemies, { x = math.random(800), y = 0 })
     end
     for _, enemy in ipairs(enemies) do
         enemy.fireTimer = (enemy.fireTimer or 0) + dt
@@ -85,10 +83,9 @@ function love.update(dt)
         end
     end
 
-
     -- Actualizar enemigos y sus balas
-    for _, enemy in ipairs(enemies) do
-        local angle = math.atan(player.y - enemy.y, player.x - enemy.x)
+    for i, enemy in ipairs(enemies) do
+        local angle = math.atan2(player.y - enemy.y, player.x - enemy.x)
         enemy.dx = math.cos(angle) * 100
         enemy.dy = math.sin(angle) * 100
         enemy.x = enemy.x + enemy.dx * dt
@@ -96,7 +93,7 @@ function love.update(dt)
 
         -- Eliminar enemigos fuera de pantalla
         if enemy.y > love.graphics.getHeight() then
-            table.remove(enemies, _)
+            table.remove(enemies, i)
         end
 
         -- Disparar al jugador
@@ -105,17 +102,19 @@ function love.update(dt)
         end
 
         -- Mover balas del enemigo
-        for _, bullet in ipairs(bullets) do
+        for j, bullet in ipairs(bullets) do
             if bullet.isEnemyBullet then
                 bullet.y = bullet.y + 200 * dt
 
                 -- Eliminar balas del enemigo fuera de pantalla
                 if bullet.y > love.graphics.getHeight() then
-                    table.remove(bullets, _)
+                    table.remove(bullets, j)
                 end
             end
         end
-        -- Actualizar el temporizador de los enemigos
+    end
+
+    -- Actualizar el temporizador de los enemigos
     enemyTimer = enemyTimer + dt
 
     -- Generar nuevos enemigos si ha pasado el intervalo de tiempo
@@ -133,20 +132,6 @@ function love.update(dt)
 
     -- ... (código de colisiones)
 end
-
-    
-    for i = #enemies, 1, -1 do
-        local enemy = enemies[i]
-        for j, bullet in ipairs(bullets) do
-            if not bullet.isEnemyBullet and love.checkCollision(enemy.x, enemy.y, enemyImg:getWidth(), enemyImg:getHeight(), bullet.x, bullet.y, bulletImg:getWidth(), bulletImg:getHeight()) then
-                table.remove(enemies, i)
-                table.remove(bullets, j)
-                break
-            end
-        end
-    end
-end
-    
 
 function love.checkCollision(x1, y1, w1, h1, x2, y2, w2, h2)
     return x1 < x2 + w2 and
@@ -172,17 +157,14 @@ function love.checkPlayerEnemyCollision()
         end
     end
 end
+
 function love.draw()
     -- Dibujar fondo
-    
     local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
     local imageWidth, imageHeight = background:getWidth(), background:getHeight()
     local scaleX = windowWidth / imageWidth
     local scaleY = windowHeight / imageHeight
-
     love.graphics.draw(background, 0, 0, 0, scaleX, scaleY)
-
-
 
     -- Dibujar jugador
     love.graphics.draw(player.img, player.x, player.y)
