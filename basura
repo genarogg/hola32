@@ -1,0 +1,113 @@
+-- Requiere la librería Love2D
+
+-- Definir variables globales
+
+
+-- Definir variables globales
+local player = {x = 370, y = 530, speed = 200, img = nil}
+local bullets = {}
+local enemies = { x = 370, y = 530, speed = 200, img = nil}
+local background
+local enemyImg
+local bulletImg
+local enemyBulletImg
+
+function love.load()
+    background = love.graphics.newImage('imagen.png')
+    player.img = love.graphics.newImage('aa.png')
+    enemyImg = love.graphics.newImage('enemigo.png')
+    bulletImg = love.graphics.newImage('bala.png')
+    enemyBulletImg = love.graphics.newImage('enemigo.png')
+
+end
+
+function love.checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
+    return x1 < x2+w2 and x2 < x1+w1 and y1 < y2+h2 and y2 < y1+h1
+end
+
+function love.update(dt)
+    -- Movimiento del jugador
+    if love.keyboard.isDown('left') then
+        player.x = player.x - (player.speed * dt)
+    elseif love.keyboard.isDown('right') then
+        player.x = player.x + (player.speed * dt)
+    end
+    if love.keyboard.isDown("down") then
+        player.y = player.y + (player.speed * dt)
+    elseif love.keyboard.isDown("up") then
+        player.y = player.y - (player.speed * dt)
+    end
+
+    -- Disparar balas
+    if love.keyboard.isDown('space') then
+        table.insert(bullets, { x = player.x, y = player.y })
+    end
+
+    -- Actualizar posición de las balas
+    for i = #bullets, 1, -1 do
+        bullets[i].y = bullets[i].y - (200 * dt) -- Velocidad de las balas
+
+        -- Eliminar balas fuera de pantalla
+        if bullets[i].y < 0 then
+            table.remove(bullets, i)
+        end
+
+        -- Colisiones entre balas y enemigos
+        for j = #enemies, 1, -1 do
+            if love.checkCollision(bullets[i].x, bullets[i].y, bulletImg:getWidth(), bulletImg:getHeight(), enemies[j].x, enemies[j].y, enemyImg:getWidth(), enemyImg:getHeight()) then
+                table.remove(bullets, i)
+                table.remove(enemies, j)
+            end
+        end
+    end
+
+    -- Crear enemigos y hacerlos moverse hacia el jugador desde arriba
+    if math.random(100) < 1 then
+        local newEnemy = { x = math.random(love.graphics.getWidth()), y = 0 }
+        newEnemy.dx = (player.x - newEnemy.x) / 2 -- Calcular dirección x hacia el jugador
+        newEnemy.dy = (player.y - newEnemy.y) / 2 -- Calcular dirección y hacia el jugador
+        table.insert(enemies, newEnemy)
+    end
+
+    for _, enemy in ipairs(enemies) do
+        enemy.x = enemy.x + enemy.dx * dt -- Mover enemigo en dirección x hacia el jugador
+        enemy.y = enemy.y + enemy.dy * dt -- Mover enemigo en dirección y hacia el jugador
+
+        -- Disparar al jugador
+if math.random(100) < 60 then
+    table.insert(bullets, { x = enemy.x, y = enemy.y, isEnemyBullet = true }) -- Marcar la bala como del enemigo
+end
+
+-- Eliminar enemigos fuera de pantalla
+if enemy.y > love.graphics.getHeight() then
+    table.remove(enemies, _)
+end
+    end
+end
+
+function love.draw()
+    -- Dibujar fondo
+    local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
+    local imageWidth, imageHeight = background:getWidth(), background:getHeight()
+    local scaleX = windowWidth / imageWidth
+    local scaleY = windowHeight / imageHeight
+
+    love.graphics.draw(background, 0, 0, 0, scaleX, scaleY)
+
+    -- Dibujar jugador
+    love.graphics.draw(player.img, player.x, player.y)
+
+    -- Dibujar balas del jugador
+    for _, bullet in ipairs(bullets) do
+        love.graphics.draw(bulletImg, bullet.x, bullet.y)
+    end
+
+    -- Dibujar enemigos y sus balas
+    for _, bullet in ipairs(bullets) do
+        if bullet.isEnemyBullet then
+            love.graphics.draw(enemyBulletImg, bullet.x, bullet.y)
+    
+        end
+    end
+    
+end
